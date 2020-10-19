@@ -1,19 +1,23 @@
 package com.example.testcomposeapp.view
 
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageAsset
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.example.testcomposeapp.ui.shapes
 import com.example.testcomposeapp.utils.InjectorUtils
 
 class MainActivity : AppCompatActivity() {
@@ -159,6 +163,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var isLandscape = mutableStateOf<Boolean>(false)
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        isLandscape.value = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        super.onConfigurationChanged(newConfig)
+    }
+
     @Composable
     fun characterDisplay() {
 
@@ -173,11 +183,36 @@ class MainActivity : AppCompatActivity() {
                 absoluteRight.linkTo(parent.absoluteRight, margin = 16.dp)
             }
 
-            Row(characterMod)
+            if (isLandscape.value)
+            {
+                Row(characterMod)
+                {
+                    image()
+                    Column(Modifier.padding(16.dp)) {
+
+                        characterDetail(title = "name", info = characterName.value)
+                        characterDetail(title = "species", info = characterSpecies.value)
+                        characterDetail(title = "gender", info = characterGender.value)
+                    }
+                }
+            }
+            else
+            {
+                Column(characterMod) {
+                    image()
+                    characterDetail(title = "name", info = characterName.value)
+                    characterDetail(title = "species", info = characterSpecies.value)
+                    characterDetail(title = "gender", info = characterGender.value)
+                }
+            }
+
+
+            /*Row(characterMod)
             {
                 if (image.value != null) {
                     Image(image.value!!, Modifier.preferredSizeIn(minHeight = 60.dp,
-                            minWidth = 60.dp, maxHeight = 600.dp, maxWidth = 600.dp))
+                            minWidth = 60.dp, maxHeight = 600.dp, maxWidth = 600.dp)
+                            .clip(CircleShape))
                 }
                 Column(Modifier.padding(16.dp)) {
 
@@ -190,9 +225,28 @@ class MainActivity : AppCompatActivity() {
                     Text("gender")
                     Text(text = characterGender.value)
                 }
-            }
+            }*/
         }
 
+    }
+
+    @Composable
+    fun image()
+    {
+        if (image.value != null) {
+            Image(image.value!!, Modifier.preferredSizeIn(minHeight = 60.dp,
+                    minWidth = 60.dp, maxHeight = 600.dp, maxWidth = 600.dp)
+                    .clip(CircleShape))
+        }
+    }
+
+    @Composable
+    fun characterDetail(title: String, info: String)
+    {
+        Column(Modifier.padding(16.dp)) {
+            Text(title, style = MaterialTheme.typography.h6)
+            Text(info)
+        }
     }
 
     @Composable
@@ -210,12 +264,12 @@ class MainActivity : AppCompatActivity() {
 
             Row(answerMod) {
                 Button(onClick = {viewModel.checkAnswer("Dead")}, Modifier.padding(16.dp)) {
-                    Text("Dead")
+                    Text("Dead", style= MaterialTheme.typography.h6)
                 }
 
                 Button(onClick = {viewModel.checkAnswer("Alive")}, Modifier.padding(16.dp))
                 {
-                    Text("Alive")
+                    Text("Alive", style= MaterialTheme.typography.h6)
                 }
             }
         }
