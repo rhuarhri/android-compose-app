@@ -15,7 +15,7 @@ class ApiHandler {
 
     private val baseUrl : String = "https://rickandmortyapi.com/"
 
-    private lateinit var retrofit: Retrofit
+    private val retrofit: Retrofit
 
     init
     {

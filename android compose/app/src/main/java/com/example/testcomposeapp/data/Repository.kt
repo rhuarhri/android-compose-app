@@ -9,7 +9,17 @@ class Repository constructor(private val databaseHandler: DatabaseHandler, priva
 
     fun getScore() : LiveData<Int>
     {
-        return databaseHandler.database.getScore()
+        return model.getScore()
+    }
+
+    fun getLives() : LiveData<Int>
+    {
+        return model.getLives()
+    }
+
+    fun getHighScore() : LiveData<Int>
+    {
+        return model.getHighScore()
     }
 
     fun getCharacter() : LiveData<Character>

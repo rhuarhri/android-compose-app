@@ -15,9 +15,25 @@ import java.net.URL
 
 class AppViewModel constructor(private val repository: Repository) : ViewModel() {
 
+    var initialHighScore : Int = 0
+    init{
+        initialHighScore = if (getHighScore().value != null) getHighScore().value!! else 0
+
+    }
+
     fun getScore() : LiveData<Int>
     {
         return repository.getScore()
+    }
+
+    fun getLives() : LiveData<Int>
+    {
+        return repository.getLives()
+    }
+
+    fun getHighScore() : LiveData<Int>
+    {
+        return repository.getHighScore()
     }
 
     fun getCharacterData() : LiveData<Character>

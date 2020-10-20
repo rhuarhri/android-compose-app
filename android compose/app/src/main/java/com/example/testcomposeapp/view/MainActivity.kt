@@ -1,46 +1,38 @@
 package com.example.testcomposeapp.view
 
-
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageAsset
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.example.testcomposeapp.ui.shapes
 import com.example.testcomposeapp.utils.InjectorUtils
+import com.example.testcomposeapp.view.widgets.WidgetBuilder
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: AppViewModel
 
-    private var characterName = mutableStateOf("")
-
-    private var characterGender = mutableStateOf("")
-
-    private var characterSpecies = mutableStateOf("")
-
-    private var image = mutableStateOf<ImageAsset?>(null)
-
-    private var score = mutableStateOf(0)
+    private lateinit var widgetBuilder : WidgetBuilder
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val factory = InjectorUtils.provideCountViewModelFactory()
+        val factory = InjectorUtils.provideCountViewModelFactory(applicationContext)
         viewModel = ViewModelProvider(this, factory).get(AppViewModel::class.java)
 
+        widgetBuilder = WidgetBuilder(viewModel, applicationContext)
+
         setupObserver()
+
+        widgetBuilder.highScore.value = viewModel.initialHighScore
 
         setContent {
                 mainScreen()
@@ -50,19 +42,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupObserver() {
         viewModel.getCharacterData().observe(this, Observer {
-            characterName.value = it.name
-            characterSpecies.value = it.species
-            characterGender.value = it.gender
+            widgetBuilder.characterName.value = it.name
+            widgetBuilder.characterSpecies.value = it.species
+            widgetBuilder.characterGender.value = it.gender
 
             viewModel.getImage(it.imageURL)
+
         })
 
         viewModel.getImageAsset().observe(this, Observer<ImageAsset> {
-            image.value = it
+            widgetBuilder.image.value = it
+
+            //data loaded
+            checkGameOver()
         })
 
         viewModel.getScore().observe(this, Observer {
-            score.value = it
+            widgetBuilder.score.value = it
+        })
+
+        viewModel.getLives().observe(this, Observer {
+            widgetBuilder.lives.value = it
+        })
+
+        viewModel.getHighScore().observe(this, Observer {
+            widgetBuilder.highScore.value = it
         })
 
     }
@@ -76,14 +80,14 @@ class MainActivity : AppCompatActivity() {
                     topBar = {
                         TopAppBar(title = { title() })
                     },
-                    bottomBar = { answer() }
+                    bottomBar = { widgetBuilder.userAnswer.widget() }
             ) {
 
                 Column(Modifier.fillMaxHeight()) {
 
-                    score()
-                    question()
-                    characterDisplay()
+                    widgetBuilder.playerStatus.widget()
+                    widgetBuilder.question.widget()
+                    widgetBuilder.characterDisplay.widget()
                 }
 
             }
@@ -109,170 +113,32 @@ class MainActivity : AppCompatActivity() {
             }
 
             MaterialTheme() {
-
-                Text("Rick and morty quiz",
-                        style = MaterialTheme.typography.h3,
+                val textStyle = if (widgetBuilder.isScreenSmall) MaterialTheme.typography.h4 else MaterialTheme.typography.h3
+                Text("Rick and Morty quiz",
+                        style = textStyle,
                         modifier = titleMod)
 
             }
         }
     }
 
-    @Composable
-    fun score() {
-
-        ConstraintLayout(Modifier.fillMaxWidth())
+    private val question : String = "Is this character dead or alive?"
+    private val gameOver : String = "GAME OVER"
+    private fun checkGameOver()
+    {
+        if (widgetBuilder.lives.value > 0)
         {
-            val (widget) = createRefs()
-
-            val scoreMod: Modifier = Modifier.constrainAs(widget)
-            {
-                //bottom.linkTo(parent.bottom, margin = 16.dp)
-                top.linkTo(parent.top, margin = 16.dp)
-                absoluteLeft.linkTo(parent.absoluteLeft, margin = 16.dp)
-                //absoluteRight.linkTo(parent.absoluteRight, margin = 16.dp)
-                //width = Dimension.fillToConstraints //i.e. match parent
-            }
-
-            MaterialTheme() {
-                Text("Your score is ${score.value}",
-                        style = MaterialTheme.typography.h6,
-                        modifier = scoreMod)
-            }
+            widgetBuilder.disabled.value = false
+            widgetBuilder.questionDisplay.value = question
+        }
+        else{
+            widgetBuilder.questionDisplay.value = gameOver
         }
     }
 
-    @Composable
-    fun question() {
-        ConstraintLayout(Modifier.fillMaxWidth())
-        {
-            val (widget) = createRefs()
-
-            val questionMod = Modifier.constrainAs(widget)
-            {
-                top.linkTo(parent.top, margin = 16.dp)
-                absoluteLeft.linkTo(parent.absoluteLeft, margin = 16.dp)
-                absoluteRight.linkTo(parent.absoluteRight, margin = 16.dp)
-            }
-
-            MaterialTheme() {
-                Text("Is this character dead or alive?",
-                        style = MaterialTheme.typography.h5,
-                        modifier = questionMod)
-            }
-        }
-    }
-
-    private var isLandscape = mutableStateOf<Boolean>(false)
     override fun onConfigurationChanged(newConfig: Configuration) {
-        isLandscape.value = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
+        widgetBuilder.isLandscape.value = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
         super.onConfigurationChanged(newConfig)
-    }
-
-    @Composable
-    fun characterDisplay() {
-
-        ConstraintLayout(Modifier.fillMaxWidth())
-        {
-            val (widget) = createRefs()
-
-            val characterMod: Modifier = Modifier.constrainAs(widget)
-            {
-                top.linkTo(parent.top, margin = 16.dp)
-                absoluteLeft.linkTo(parent.absoluteLeft, margin = 16.dp)
-                absoluteRight.linkTo(parent.absoluteRight, margin = 16.dp)
-            }
-
-            if (isLandscape.value)
-            {
-                Row(characterMod)
-                {
-                    image()
-                    Column(Modifier.padding(16.dp)) {
-
-                        characterDetail(title = "name", info = characterName.value)
-                        characterDetail(title = "species", info = characterSpecies.value)
-                        characterDetail(title = "gender", info = characterGender.value)
-                    }
-                }
-            }
-            else
-            {
-                Column(characterMod) {
-                    image()
-                    characterDetail(title = "name", info = characterName.value)
-                    characterDetail(title = "species", info = characterSpecies.value)
-                    characterDetail(title = "gender", info = characterGender.value)
-                }
-            }
-
-
-            /*Row(characterMod)
-            {
-                if (image.value != null) {
-                    Image(image.value!!, Modifier.preferredSizeIn(minHeight = 60.dp,
-                            minWidth = 60.dp, maxHeight = 600.dp, maxWidth = 600.dp)
-                            .clip(CircleShape))
-                }
-                Column(Modifier.padding(16.dp)) {
-
-                    Text("name")
-                    Text(text = characterName.value)
-
-                    Text("species")
-                    Text(text = characterSpecies.value)
-
-                    Text("gender")
-                    Text(text = characterGender.value)
-                }
-            }*/
-        }
-
-    }
-
-    @Composable
-    fun image()
-    {
-        if (image.value != null) {
-            Image(image.value!!, Modifier.preferredSizeIn(minHeight = 60.dp,
-                    minWidth = 60.dp, maxHeight = 600.dp, maxWidth = 600.dp)
-                    .clip(CircleShape))
-        }
-    }
-
-    @Composable
-    fun characterDetail(title: String, info: String)
-    {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.h6)
-            Text(info)
-        }
-    }
-
-    @Composable
-    fun answer() {
-        ConstraintLayout(Modifier.fillMaxWidth())
-        {
-            val (widget) = createRefs()
-
-            val answerMod: Modifier = Modifier.constrainAs(widget)
-            {
-                top.linkTo(parent.top, margin = 16.dp)
-                absoluteLeft.linkTo(parent.absoluteLeft, margin = 16.dp)
-                absoluteRight.linkTo(parent.absoluteRight, margin = 16.dp)
-            }
-
-            Row(answerMod) {
-                Button(onClick = {viewModel.checkAnswer("Dead")}, Modifier.padding(16.dp)) {
-                    Text("Dead", style= MaterialTheme.typography.h6)
-                }
-
-                Button(onClick = {viewModel.checkAnswer("Alive")}, Modifier.padding(16.dp))
-                {
-                    Text("Alive", style= MaterialTheme.typography.h6)
-                }
-            }
-        }
     }
 
 }
