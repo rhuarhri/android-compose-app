@@ -46,6 +46,11 @@ class AppViewModel constructor(private val repository: Repository) : ViewModel()
         repository.checkAnswer(answer)
     }
 
+    fun replayGame()
+    {
+        repository.replayGame()
+    }
+
     private val imageAsset = MutableLiveData<ImageAsset>()
     fun getImageAsset() : LiveData<ImageAsset>
     {

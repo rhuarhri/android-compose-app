@@ -3,9 +3,13 @@ package com.example.testcomposeapp.view
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Icon
 import androidx.compose.foundation.Text
+import androidx.compose.material.AlertDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageAsset
@@ -14,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.testcomposeapp.utils.InjectorUtils
+import com.example.testcomposeapp.view.widgets.Alerts
 import com.example.testcomposeapp.view.widgets.WidgetBuilder
 
 class MainActivity : AppCompatActivity() {
@@ -61,8 +66,9 @@ class MainActivity : AppCompatActivity() {
             widgetBuilder.score.value = it
         })
 
-        viewModel.getLives().observe(this, Observer {
-            widgetBuilder.lives.value = it
+        viewModel.getLives().observe(this, Observer {lives ->
+            widgetBuilder.lives.value = lives
+
         })
 
         viewModel.getHighScore().observe(this, Observer {
@@ -71,6 +77,8 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
+
     @Composable
     fun mainScreen() {
 
@@ -78,7 +86,16 @@ class MainActivity : AppCompatActivity() {
 
             Scaffold(
                     topBar = {
-                        TopAppBar(title = { title() })
+                        TopAppBar(title = { title() },
+                                actions = {
+                                    IconButton(onClick = {
+                                        Alerts.getInstance().showInfoAlert()
+                                    })
+                                    {
+                                        Icon(Icons.Filled.Info)
+                                        Alerts.getInstance().userInfoAlert()
+                                    }
+                                })
                     },
                     bottomBar = { widgetBuilder.userAnswer.widget() }
             ) {
@@ -88,6 +105,8 @@ class MainActivity : AppCompatActivity() {
                     widgetBuilder.playerStatus.widget()
                     widgetBuilder.question.widget()
                     widgetBuilder.characterDisplay.widget()
+                    //alert
+                    Alerts.getInstance().gameOverAlert(replayGameFun = {restGame()})
                 }
 
             }
@@ -122,23 +141,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val question : String = "Is this character dead or alive?"
-    private val gameOver : String = "GAME OVER"
+    //private val question : String =
+    //private val gameOver : String = "GAME OVER"
     private fun checkGameOver()
     {
-        if (widgetBuilder.lives.value > 0)
-        {
+        if (widgetBuilder.lives.value > 0) {
+
             widgetBuilder.disabled.value = false
-            widgetBuilder.questionDisplay.value = question
         }
-        else{
-            widgetBuilder.questionDisplay.value = gameOver
+        else
+        {
+            Alerts.getInstance().showGameOverAlert()
         }
+    }
+
+    private fun restGame()
+    {
+        viewModel.replayGame()
+        widgetBuilder.disabled.value = false
+        Alerts.getInstance().hideGameOverAlert()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         widgetBuilder.isLandscape.value = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE
         super.onConfigurationChanged(newConfig)
     }
+
+
 
 }

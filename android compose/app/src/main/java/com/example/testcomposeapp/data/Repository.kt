@@ -32,6 +32,11 @@ class Repository constructor(private val databaseHandler: DatabaseHandler, priva
         model.checkAnswer(answer)
     }
 
+    fun replayGame()
+    {
+        model.replay()
+    }
+
 
     //how to implement singleton
     companion object

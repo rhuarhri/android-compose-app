@@ -9,10 +9,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-class QuestionDisplayWidget(private val question : MutableState<String>, private val isScreenSmall: Boolean)
+class QuestionDisplayWidget(private val isScreenSmall: Boolean)
 {
 
     private val topPadding : Int = if (isScreenSmall) 5 else 16
+    private val question : String = "Is this character dead or alive?"
 
     @Composable
     fun widget() {
@@ -29,7 +30,7 @@ class QuestionDisplayWidget(private val question : MutableState<String>, private
 
             MaterialTheme() {
                 val textStyle = if (isScreenSmall) MaterialTheme.typography.h6 else MaterialTheme.typography.h5
-                Text(question.value,
+                Text(question,
                         style = textStyle,
                         modifier = questionMod)
             }

@@ -40,7 +40,7 @@ class WidgetBuilder(private val viewModel: AppViewModel, private val context: Co
 
     val playerStatus = PlayerStatusWidget(score = score, lives = lives,
             highScore = highScore, isScreenSmall = isScreenSmall)
-    val question = QuestionDisplayWidget(questionDisplay, isScreenSmall)
+    val question = QuestionDisplayWidget(isScreenSmall)
     val characterDisplay = CharacterDisplayWidget(
             name = characterName,
             image = image,

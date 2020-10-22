@@ -25,8 +25,7 @@ class Model constructor(private val databaseHandler : DatabaseHandler) {
     }
 
     init {
-        score.value = 0
-        lives.value = startLivesAmount
+        replay()
     }
 
     private fun increaseScore()
@@ -84,6 +83,12 @@ class Model constructor(private val databaseHandler : DatabaseHandler) {
         }
 
         databaseHandler.apiHandler.getRandomCharacter()
+    }
+
+    fun replay()
+    {
+        score.value = 0
+        lives.value = startLivesAmount
     }
 
 }
